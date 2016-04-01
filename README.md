@@ -8,7 +8,7 @@ Usage
 
 Here's an example usage of saslog.
 
-{{{
+```
 package main
 
 import (
@@ -43,5 +43,4 @@ func main() {
     // The standar logger will use our logger and include our logger level data and log level.
     log.Println("Log message here")
 }
-
-}}}
+```
