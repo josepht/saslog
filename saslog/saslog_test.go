@@ -48,7 +48,7 @@ func TestLoggerStdLogOutput(t *testing.T) {
 		return
 	}
 
-	expected := fmt.Sprintf("%s %s \"%s\"", prefix, level, msg)
+	expected := fmt.Sprintf("%s %s \"%s\"", level, prefix, msg)
 
 	if !strings.Contains(strout, expected) {
 		t.Error(strout, " doesn't containe '"+expected+"'")
@@ -97,7 +97,7 @@ func TestLoggerOutput(t *testing.T) {
 		return
 	}
 
-	expected := fmt.Sprintf("%s %s \"%s\" %s=%s", prefix, level, msg, key, value)
+	expected := fmt.Sprintf("%s %s \"%s\" %s=%s", level, prefix, msg, key, value)
 
 	if !strings.Contains(strout, expected) {
 		t.Error(strout, " doesn't containe '"+expected+"'")
@@ -170,7 +170,7 @@ func TestLoggerLevelReset(t *testing.T) {
 		return
 	}
 
-	expected := fmt.Sprintf("%s %s \"%s\"", prefix, level, info_msg)
+	expected := fmt.Sprintf("%s %s \"%s\"", level, prefix, info_msg)
 
 	if !strings.Contains(strout, expected) {
 		t.Error(strout, " doesn't containe '"+expected+"'")
@@ -202,7 +202,7 @@ func TestLoggerLevelReset(t *testing.T) {
 		return
 	}
 
-	expected = fmt.Sprintf("%s %s \"%s\"", prefix, "DEBUG", debug_msg)
+	expected = fmt.Sprintf("%s %s \"%s\"", "DEBUG", prefix, debug_msg)
 
 	if !strings.Contains(strout, expected) {
 		t.Error(strout, " doesn't containe '"+expected+"'")
@@ -234,7 +234,7 @@ func TestLoggerLevelReset(t *testing.T) {
 		return
 	}
 
-	expected = fmt.Sprintf("%s %s \"%s\"", prefix, level, info_msg)
+	expected = fmt.Sprintf("%s %s \"%s\"", level, prefix, info_msg)
 
 	if !strings.Contains(strout, expected) {
 		t.Error(strout, " doesn't containe '"+expected+"'")
