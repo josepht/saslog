@@ -48,14 +48,15 @@ func (logger *Logger) Debug(msg string, data F) {
 
 func (logger *Logger) Write(bytes []byte) (int, error) {
 	output := time.Now().UTC().Format("2006-01-02 15:04:05.000")
+
+	output += " " + logger.level
+
 	if logger.IncludePrefix {
 		output += " " + logger.prefix
 	}
 
-	output += " " + logger.level + " "
-
 	// remove newline(s) added by log.Print
-	output += "\"" + strings.TrimSpace(string(bytes)) + "\""
+	output += " \"" + strings.TrimSpace(string(bytes)) + "\""
 
 	for key, value := range logger.Data {
 		output += " " + key + "=" + value
