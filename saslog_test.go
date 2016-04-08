@@ -8,16 +8,18 @@ import (
 	"testing"
 )
 
+var buf *bytes.Buffer = new(bytes.Buffer)
+var config Config = Config{Writer: buf, Prefix: "SAS:", Name: "sas"}
+
 // Test that the standard logger has our prefix and a default level of 'INFO'
 func TestLoggerStdLogOutput(t *testing.T) {
-	prefix := "SAS:"
-	data := F{}
-	app_data := F{}
 	msg := "test"
 
-	buf := new(bytes.Buffer)
+	l, err := New(config)
+	if err != nil {
+		t.Error("Failed to create a Logger")
+	}
 
-	l := New(buf, prefix, data, app_data)
 	log.SetFlags(0)
 	log.SetOutput(l)
 
@@ -26,7 +28,7 @@ func TestLoggerStdLogOutput(t *testing.T) {
 
 	strout := strings.TrimSpace(buf.String())
 
-	expected := fmt.Sprintf("INFO %s \"%s\"", prefix, msg)
+	expected := fmt.Sprintf("INFO %s \"%s\"", config.Prefix, msg)
 
 	if !strings.Contains(strout, expected) {
 		t.Error(strout, " doesn't containe '"+expected+"'")
@@ -37,20 +39,22 @@ func TestLoggerStdLogOutput(t *testing.T) {
 // Test that the loggers output is formated properly and includes the default values
 func TestLoggerOutput(t *testing.T) {
 	// defaults
-	prefix := "SAS:"
-	level := "INFO"
 	key := "request_id"
 	value := "1234"
-	data := F{
-		key: value,
-	}
-	app_data := F{
-		key: value,
-	}
 	msg := "test"
-	buf := new(bytes.Buffer)
 
-	l := New(buf, prefix, data, app_data)
+	c := config
+	c.SystemData = F{
+		key: value,
+	}
+	c.AppData = F{
+		key: value,
+	}
+
+	l, err := New(c)
+	if err != nil {
+		t.Error("Failed to create a Logger")
+	}
 	log.SetFlags(0)
 	log.SetOutput(l)
 
@@ -58,7 +62,7 @@ func TestLoggerOutput(t *testing.T) {
 
 	strout := strings.TrimSpace(buf.String())
 
-	expected := fmt.Sprintf("%s %s \"%s\" %s=%s", level, prefix, msg, key, value)
+	expected := fmt.Sprintf("INFO %s \"%s\" %s=%s", c.Prefix, msg, key, value)
 
 	if !strings.Contains(strout, expected) {
 		t.Error(strout, " doesn't containe '"+expected+"'")
@@ -69,18 +73,19 @@ func TestLoggerOutput(t *testing.T) {
 // Test that a new Logger has the correct defaults
 func TestNewLoggerDefaults(t *testing.T) {
 
-	// defaults
-	prefix := "SAS:"
-	data := F{}
-	app_data := F{}
-	buf := new(bytes.Buffer)
-
-	l := New(buf, prefix, data, app_data)
+	l, err := New(config)
+	if err != nil {
+		t.Error("Failed to create a Logger")
+	}
 
 	// check Logger defaults match
 
-	if l.name != prefix {
-		t.Error("prefix should be '", prefix, "' but is '", l.name, "' instead")
+	if l.prefix != config.Prefix {
+		t.Error("prefix should be '", config.Prefix, "' but is '", l.prefix, "' instead")
+	}
+
+	if l.name != config.Name {
+		t.Error("name should be '", config.Name, "' but is '", l.name, "' instead")
 	}
 }
 
@@ -88,14 +93,14 @@ func TestNewLoggerDefaults(t *testing.T) {
 func TestLoggerLevelReset(t *testing.T) {
 
 	// defaults
-	prefix := "SAS:"
-	data := F{}
-	app_data := F{}
 	info_msg := "test info"
 	debug_msg := "test debug"
-	buf := new(bytes.Buffer)
 
-	l := New(buf, prefix, data, app_data)
+	l, err := New(config)
+	if err != nil {
+		t.Error("Failed to create a Logger")
+	}
+
 	log.SetFlags(0)
 	log.SetOutput(l)
 
@@ -103,7 +108,7 @@ func TestLoggerLevelReset(t *testing.T) {
 	l.Info(info_msg, nil)
 	strout := strings.TrimSpace(buf.String())
 
-	expected := fmt.Sprintf("INFO %s \"%s\"", prefix, info_msg)
+	expected := fmt.Sprintf("INFO %s \"%s\"", config.Prefix, info_msg)
 
 	if !strings.Contains(strout, expected) {
 		t.Error(strout, " doesn't containe '"+expected+"'")
@@ -112,7 +117,7 @@ func TestLoggerLevelReset(t *testing.T) {
 	// Send a DEBUG log entry
 	l.Debug(debug_msg, nil)
 	strout = strings.TrimSpace(buf.String())
-	expected = fmt.Sprintf("%s %s \"%s\"", "DEBUG", prefix, debug_msg)
+	expected = fmt.Sprintf("%s %s \"%s\"", "DEBUG", config.Prefix, debug_msg)
 
 	if !strings.Contains(strout, expected) {
 		t.Error(strout, " doesn't containe '"+expected+"'")
@@ -121,7 +126,7 @@ func TestLoggerLevelReset(t *testing.T) {
 	// Send a second INFO log entry
 	l.Info(info_msg, nil)
 	strout = strings.TrimSpace(buf.String())
-	expected = fmt.Sprintf("INFO %s \"%s\"", prefix, info_msg)
+	expected = fmt.Sprintf("INFO %s \"%s\"", config.Prefix, info_msg)
 
 	if !strings.Contains(strout, expected) {
 		t.Error(strout, " doesn't containe '"+expected+"'")

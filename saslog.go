@@ -1,9 +1,11 @@
 package saslog
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"strings"
 	"time"
 )
@@ -19,18 +21,42 @@ type Logger struct {
 	systemData F
 	appData    F
 	name       string
+	prefix     string
 }
 
-func New(w io.Writer, name string, sd F, ad F) *Logger {
+type Config struct {
+	Writer     io.Writer // optional
+	Name       string
+	Prefix     string
+	SystemData F
+	AppData    F
+}
+
+func New(c Config) (*Logger, error) {
 	l := new(Logger)
 	l.l = log.New(l, "", 0)
 	l.l.SetFlags(0)
-	l.l.SetOutput(w)
-	l.name = name
-	l.systemData = sd
-	l.appData = ad
 
-	return l
+	if c.Writer == nil {
+		c.Writer = os.Stderr
+	}
+
+	l.l.SetOutput(c.Writer)
+
+	if c.Name == "" {
+		return nil, errors.New("missing field 'name'")
+	}
+	if c.Prefix == "" {
+		return nil, errors.New("missing field 'prefix'")
+	}
+
+	l.name = c.Name
+	l.prefix = c.Prefix
+	l.systemData = c.SystemData
+	l.appData = c.AppData
+
+	return l, nil
+
 }
 
 func (l *Logger) log(msg string, level string, data F) {
@@ -59,7 +85,8 @@ func (l *Logger) log(msg string, level string, data F) {
 		d += fmt.Sprintf(" %s.%s=%s", s, key, value)
 	}
 
-	output := fmt.Sprintf("%s %s %s \"%s\"%s", ts, level, l.name, msg, d)
+	// TODO: add encoding and/or quoting
+	output := fmt.Sprintf("%s %s %s \"%s\"%s", ts, level, l.prefix, msg, d)
 
 	l.l.Print(output)
 
