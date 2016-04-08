@@ -1,11 +1,9 @@
 package saslog
 
 import (
+	"bytes"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"os"
-	"reflect"
 	"strings"
 	"testing"
 )
@@ -13,42 +11,22 @@ import (
 // Test that the standard logger has our prefix and a default level of 'INFO'
 func TestLoggerStdLogOutput(t *testing.T) {
 	prefix := "SAS:"
-	level := "INFO"
 	data := F{}
+	app_data := F{}
 	msg := "test"
 
-	l := New(prefix, level, data)
+	buf := new(bytes.Buffer)
+
+	l := New(buf, prefix, data, app_data)
 	log.SetFlags(0)
 	log.SetOutput(l)
 
-	old := os.Stderr
-
-	temp, err := ioutil.TempFile(os.TempDir(), "stderr")
-	fname := temp.Name()
-	if err != nil {
-		t.Error("failed to create file '"+fname+"': ", err)
-		return
-	}
-
-	os.Stderr = temp
-
-	defer func() { os.Stderr = old }()
-	defer func() { os.Remove(fname) }()
-
 	// Use the standard logger
 	log.Print(msg)
-	temp.Close()
-	os.Stderr = old
 
-	out, err := ioutil.ReadFile(fname)
-	strout := strings.TrimSpace(string(out))
+	strout := strings.TrimSpace(buf.String())
 
-	if err != nil {
-		t.Error("failed to read file '"+fname+"': ", err)
-		return
-	}
-
-	expected := fmt.Sprintf("%s %s \"%s\"", level, prefix, msg)
+	expected := fmt.Sprintf("INFO %s \"%s\"", prefix, msg)
 
 	if !strings.Contains(strout, expected) {
 		t.Error(strout, " doesn't containe '"+expected+"'")
@@ -66,36 +44,19 @@ func TestLoggerOutput(t *testing.T) {
 	data := F{
 		key: value,
 	}
+	app_data := F{
+		key: value,
+	}
 	msg := "test"
+	buf := new(bytes.Buffer)
 
-	l := New(prefix, level, data)
+	l := New(buf, prefix, data, app_data)
 	log.SetFlags(0)
 	log.SetOutput(l)
 
-	temp, err := ioutil.TempFile(os.TempDir(), "stderr")
-	fname := temp.Name()
-	if err != nil {
-		t.Error("failed to create file '"+fname+"': ", err)
-		return
-	}
-	defer func() { os.Remove(fname) }()
-
-	old := os.Stderr
-
-	os.Stderr = temp
-	defer func() { os.Stderr = old }()
-
 	l.Info(msg, nil)
-	temp.Close()
-	os.Stderr = old
 
-	out, err := ioutil.ReadFile(fname)
-	strout := strings.TrimSpace(string(out))
-
-	if err != nil {
-		t.Error("failed to read file '"+fname+"': ", err)
-		return
-	}
+	strout := strings.TrimSpace(buf.String())
 
 	expected := fmt.Sprintf("%s %s \"%s\" %s=%s", level, prefix, msg, key, value)
 
@@ -110,23 +71,16 @@ func TestNewLoggerDefaults(t *testing.T) {
 
 	// defaults
 	prefix := "SAS:"
-	level := "INFO"
 	data := F{}
+	app_data := F{}
+	buf := new(bytes.Buffer)
 
-	l := New(prefix, level, data)
+	l := New(buf, prefix, data, app_data)
 
 	// check Logger defaults match
-	if l.level != "INFO" {
-		t.Error("level should be '", level, "' but is '", l.level, "' instead")
-	}
 
-	if l.prefix != prefix {
-		t.Error("prefix should be '", prefix, "' but is '", l.prefix, "' instead")
-	}
-
-	eq := reflect.DeepEqual(l.Data, data)
-	if !eq {
-		t.Error("data should be '", data, "' but is '", l.Data, "' instead")
+	if l.name != prefix {
+		t.Error("prefix should be '", prefix, "' but is '", l.name, "' instead")
 	}
 }
 
@@ -135,73 +89,29 @@ func TestLoggerLevelReset(t *testing.T) {
 
 	// defaults
 	prefix := "SAS:"
-	level := "INFO"
 	data := F{}
+	app_data := F{}
 	info_msg := "test info"
 	debug_msg := "test debug"
+	buf := new(bytes.Buffer)
 
-	l := New(prefix, level, data)
+	l := New(buf, prefix, data, app_data)
 	log.SetFlags(0)
 	log.SetOutput(l)
 
 	// Send an INFO log entry
-	temp, err := ioutil.TempFile(os.TempDir(), "stderr")
-	fname := temp.Name()
-	if err != nil {
-		t.Error("failed to create file '"+fname+"': ", err)
-		return
-	}
-	defer func() { os.Remove(fname) }()
-
-	old := os.Stderr
-
-	os.Stderr = temp
-	defer func() { os.Stderr = old }()
-
 	l.Info(info_msg, nil)
-	temp.Close()
-	os.Stderr = old
+	strout := strings.TrimSpace(buf.String())
 
-	out, err := ioutil.ReadFile(fname)
-	strout := strings.TrimSpace(string(out))
-
-	if err != nil {
-		t.Error("failed to read file '"+fname+"': ", err)
-		return
-	}
-
-	expected := fmt.Sprintf("%s %s \"%s\"", level, prefix, info_msg)
+	expected := fmt.Sprintf("INFO %s \"%s\"", prefix, info_msg)
 
 	if !strings.Contains(strout, expected) {
 		t.Error(strout, " doesn't containe '"+expected+"'")
 	}
 
 	// Send a DEBUG log entry
-	temp, err = ioutil.TempFile(os.TempDir(), "stderr")
-	fname = temp.Name()
-	if err != nil {
-		t.Error("failed to create file '"+fname+"': ", err)
-		return
-	}
-	defer func() { os.Remove(fname) }()
-
-	old = os.Stderr
-
-	os.Stderr = temp
-	defer func() { os.Stderr = old }()
-
 	l.Debug(debug_msg, nil)
-	temp.Close()
-	os.Stderr = old
-
-	out, err = ioutil.ReadFile(fname)
-	strout = strings.TrimSpace(string(out))
-
-	if err != nil {
-		t.Error("failed to read file '"+fname+"': ", err)
-		return
-	}
-
+	strout = strings.TrimSpace(buf.String())
 	expected = fmt.Sprintf("%s %s \"%s\"", "DEBUG", prefix, debug_msg)
 
 	if !strings.Contains(strout, expected) {
@@ -209,32 +119,9 @@ func TestLoggerLevelReset(t *testing.T) {
 	}
 
 	// Send a second INFO log entry
-	temp, err = ioutil.TempFile(os.TempDir(), "stderr")
-	fname = temp.Name()
-	if err != nil {
-		t.Error("failed to create file '"+fname+"': ", err)
-		return
-	}
-	defer func() { os.Remove(fname) }()
-
-	old = os.Stderr
-
-	os.Stderr = temp
-	defer func() { os.Stderr = old }()
-
 	l.Info(info_msg, nil)
-	temp.Close()
-	os.Stderr = old
-
-	out, err = ioutil.ReadFile(fname)
-	strout = strings.TrimSpace(string(out))
-
-	if err != nil {
-		t.Error("failed to read file '"+fname+"': ", err)
-		return
-	}
-
-	expected = fmt.Sprintf("%s %s \"%s\"", level, prefix, info_msg)
+	strout = strings.TrimSpace(buf.String())
+	expected = fmt.Sprintf("INFO %s \"%s\"", prefix, info_msg)
 
 	if !strings.Contains(strout, expected) {
 		t.Error(strout, " doesn't containe '"+expected+"'")
