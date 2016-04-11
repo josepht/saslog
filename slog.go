@@ -43,6 +43,14 @@ func New(c Config) (*Logger, error) {
 		c.Name = "-"
 	}
 
+	if c.SystemData == nil {
+		c.SystemData = F{}
+	}
+
+	if c.AppData == nil {
+		c.AppData = F{}
+	}
+
 	l.name = c.Name
 	l.prefix = c.Prefix
 	l.systemData = c.SystemData
@@ -69,14 +77,16 @@ func (l *Logger) New(c Config) *Logger {
 		nl.name = c.Name
 	}
 
-	// TODO: combine old and new data
 	if c.SystemData != nil {
-		nl.systemData = c.SystemData
+		for k, v := range c.SystemData {
+			nl.systemData[k] = v
+		}
 	}
 
-	// TODO: combine old and new data
 	if c.AppData != nil {
-		nl.appData = c.AppData
+		for k, v := range c.AppData {
+			nl.appData[k] = v
+		}
 	}
 
 	return nl
