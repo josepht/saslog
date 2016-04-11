@@ -79,13 +79,19 @@ func (l *Logger) New(c Config) *Logger {
 
 	if c.SystemData != nil {
 		for k, v := range c.SystemData {
-			nl.systemData[k] = v
+			// Don't update existing fields
+			if _, ok := nl.systemData[k]; !ok {
+				nl.systemData[k] = v
+			}
 		}
 	}
 
 	if c.AppData != nil {
 		for k, v := range c.AppData {
-			nl.appData[k] = v
+			// Don't update existing fields
+			if _, ok := nl.appData[k]; !ok {
+				nl.appData[k] = v
+			}
 		}
 	}
 

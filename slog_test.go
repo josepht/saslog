@@ -206,22 +206,29 @@ func TestLoggerAppDataPrefix(t *testing.T) {
 // Test deriving a Logger from an existing Logger overwrites
 // passed in config data.
 func TestLoggerFromLoggerNewData(t *testing.T) {
-	l, err := New(config)
+	c := config
+	c.SystemData = F{
+		"orig_key": "orig_value",
+	}
+	c.AppData = F{
+		"app_orig_key": "app_orig_value",
+	}
+	l, err := New(c)
 	if err != nil {
 		t.Error("Failed to create a Logger")
 	}
 
-	if l.prefix != config.Prefix {
-		t.Errorf("%s != %s", l.prefix, config.Prefix)
+	if l.prefix != c.Prefix {
+		t.Errorf("%s != %s", l.prefix, c.Prefix)
 	}
 
-	if len(l.systemData) != len(config.SystemData) {
+	if len(l.systemData) != len(c.SystemData) {
 		t.Errorf("systemData has %d items, expected %d", len(l.systemData),
-			len(config.SystemData))
+			len(c.SystemData))
 	}
 
-	if len(l.appData) != len(config.AppData) {
-		t.Errorf("appData has %d items, expected %d", len(l.appData), len(config.AppData))
+	if len(l.appData) != len(c.AppData) {
+		t.Errorf("appData has %d items, expected %d", len(l.appData), len(c.AppData))
 	}
 
 	new_prefix := "new_prefix"
@@ -229,8 +236,8 @@ func TestLoggerFromLoggerNewData(t *testing.T) {
 	nl := l.New(Config{
 		Prefix:     new_prefix,
 		Name:       new_name,
-		SystemData: F{"key": "value"},
-		AppData:    F{"app_key": "app_value"},
+		SystemData: F{"orig_key": "new_value"},
+		AppData:    F{"app_orig_key": "app_new_value"},
 	})
 
 	// prefix shouldn't be changed
@@ -248,5 +255,15 @@ func TestLoggerFromLoggerNewData(t *testing.T) {
 
 	if len(nl.appData) != 1 {
 		t.Errorf("appData has %d items, expected %d", len(nl.appData), 1)
+	}
+
+	if nl.systemData["orig_key"] != "orig_value" {
+		t.Errorf("systemData has %s for 'orig_key', expected %s", nl.systemData["orig_key"],
+			"orig_value")
+	}
+
+	if nl.appData["app_orig_key"] != "app_orig_value" {
+		t.Errorf("appData has %s for 'app_orig_key', expected %s", nl.appData["app_orig_key"],
+			"app_orig_value")
 	}
 }
