@@ -28,7 +28,7 @@ func TestLoggerStdLogOutput(t *testing.T) {
 	log.Print(msg)
 
 	s := strings.TrimSpace(buf.String())
-	e := fmt.Sprintf("INFO %s \"%s\"", config.Prefix, msg)
+	e := fmt.Sprintf("INFO %s \"%s\"", config.Name, msg)
 	if !strings.Contains(s, e) {
 		t.Errorf("'%s' doesn't contain '%s'", s, e)
 	}
@@ -63,7 +63,7 @@ func TestLoggerOutput(t *testing.T) {
 	l.Info(msg, nil)
 
 	s := strings.TrimSpace(buf.String())
-	e := fmt.Sprintf("INFO %s \"%s\" %s=\"%s\"", config.Prefix, msg, key, value)
+	e := fmt.Sprintf("INFO %s \"%s\" %s=\"%s\"", config.Name, msg, key, value)
 	if !strings.Contains(s, e) {
 		t.Errorf("'%s' doesn't contain '%s'", s, e)
 	}
@@ -112,7 +112,7 @@ func TestLoggerLevelReset(t *testing.T) {
 	s := strings.TrimSpace(buf.String())
 	buf.Reset()
 
-	e := fmt.Sprintf("INFO %s \"%s\"", config.Prefix, info_msg)
+	e := fmt.Sprintf("INFO %s \"%s\"", config.Name, info_msg)
 	if !strings.Contains(s, e) {
 		t.Errorf("'%s' doesn't contain '%s'", s, e)
 	}
@@ -121,7 +121,7 @@ func TestLoggerLevelReset(t *testing.T) {
 	l.Debug(debug_msg, nil)
 	s = strings.TrimSpace(buf.String())
 	buf.Reset()
-	e = fmt.Sprintf("%s %s \"%s\"", "DEBUG", config.Prefix, debug_msg)
+	e = fmt.Sprintf("%s %s \"%s\"", "DEBUG", config.Name, debug_msg)
 	if !strings.Contains(s, e) {
 		t.Errorf("'%s' doesn't contain '%s'", s, e)
 	}
@@ -130,7 +130,7 @@ func TestLoggerLevelReset(t *testing.T) {
 	l.Info(info_msg, nil)
 	s = strings.TrimSpace(buf.String())
 	buf.Reset()
-	e = fmt.Sprintf("INFO %s \"%s\"", config.Prefix, info_msg)
+	e = fmt.Sprintf("INFO %s \"%s\"", config.Name, info_msg)
 	if !strings.Contains(s, e) {
 		t.Errorf("'%s' doesn't contain '%s'", s, e)
 	}
@@ -164,24 +164,24 @@ func TestLoggerFromLogger(t *testing.T) {
 	}
 
 	s = strings.TrimSpace(buf.String())
-	e = fmt.Sprintf("INFO %s \"testing\" extra=\"extra\"", config.Prefix)
+	e = fmt.Sprintf("INFO %s \"testing\" extra=\"extra\"", config.Name)
 	if !strings.Contains(s, e) {
 		t.Errorf("'%s' doesn't contain '%s'", s, e)
 	}
 }
 
-// Test that missing fields in config fails.
+// Test that missing fields in config creates a default.
 func TestLoggerConfigMissingFields(t *testing.T) {
 	c := Config{}
 
 	_, err := New(c)
-	if err == nil {
-		t.Error("Missing fields didn't cause an error!")
+	if err != nil {
+		t.Error("New() shouldn't require any fields!")
 	}
 
 }
 
-// Test that AppData and per-call data is prefixed with the Logger's name.
+// Test that AppData and per-call data is prefixed with the Logger's prefix.
 func TestLoggerAppDataPrefix(t *testing.T) {
 	buf := new(bytes.Buffer)
 	c := config
@@ -197,7 +197,7 @@ func TestLoggerAppDataPrefix(t *testing.T) {
 
 	s := strings.TrimSpace(buf.String())
 	e := fmt.Sprintf("INFO %s \"testing\" system=\"system\" %s.app=\"app\" %s.per-call=\"per-call\"",
-		config.Prefix, config.Name, config.Name)
+		config.Name, config.Prefix, config.Prefix)
 	if !strings.Contains(s, e) {
 		t.Errorf("'%s' doesn't contain '%s'", s, e)
 	}
@@ -233,8 +233,9 @@ func TestLoggerFromLoggerNewData(t *testing.T) {
 		AppData:    F{"app_key": "app_value"},
 	})
 
-	if nl.prefix != new_prefix {
-		t.Errorf("%s != %s", nl.prefix, new_prefix)
+	// prefix shouldn't be changed
+	if nl.prefix != l.prefix {
+		t.Errorf("%s != %s", nl.prefix, l.prefix)
 	}
 
 	if nl.name != new_name {

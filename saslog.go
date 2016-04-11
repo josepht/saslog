@@ -1,7 +1,6 @@
 package saslog
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -24,8 +23,8 @@ type Logger struct {
 
 type Config struct {
 	Writer     io.Writer // optional
-	Name       string    // required
-	Prefix     string    // required
+	Name       string    // optional
+	Prefix     string    // optional
 	SystemData F
 	AppData    F
 }
@@ -41,10 +40,7 @@ func New(c Config) (*Logger, error) {
 	l.writer = c.Writer
 
 	if c.Name == "" {
-		return nil, errors.New("missing field 'name'")
-	}
-	if c.Prefix == "" {
-		return nil, errors.New("missing field 'prefix'")
+		c.Name = "-"
 	}
 
 	l.name = c.Name
@@ -53,7 +49,6 @@ func New(c Config) (*Logger, error) {
 	l.appData = c.AppData
 
 	return l, nil
-
 }
 
 // Create a new logger based on the current logger.  Any
@@ -79,14 +74,12 @@ func (l *Logger) New(c Config) *Logger {
 		nl.name = c.Name
 	}
 
-	if c.Prefix != "" {
-		nl.prefix = c.Prefix
-	}
-
+	// TODO: combine old and new data
 	if c.SystemData != nil {
 		nl.systemData = c.SystemData
 	}
 
+	// TODO: combine old and new data
 	if c.AppData != nil {
 		nl.appData = c.AppData
 	}
@@ -103,25 +96,17 @@ func (l *Logger) log(msg string, level string, data F) {
 		d += fmt.Sprintf(" %s=%s", key, strconv.Quote(value))
 	}
 
-	// TODO: this is strange and needs further thought
-	var s string
-	if l.systemData["service"] == "" {
-		s = l.name
-	} else {
-		s = l.systemData["service"]
-	}
-
 	// Add the application data
 	for key, value := range l.appData {
-		d += fmt.Sprintf(" %s.%s=%s", s, key, strconv.Quote(value))
+		d += fmt.Sprintf(" %s.%s=%s", l.prefix, key, strconv.Quote(value))
 	}
 
 	// Add the per-call data
 	for key, value := range data {
-		d += fmt.Sprintf(" %s.%s=%s", s, key, strconv.Quote(value))
+		d += fmt.Sprintf(" %s.%s=%s", l.prefix, key, strconv.Quote(value))
 	}
 
-	output := fmt.Sprintf("%s %s %s %s%s", ts, level, l.prefix,
+	output := fmt.Sprintf("%s %s %s %s%s", ts, level, l.name,
 		strconv.Quote(msg), d)
 
 	l.l.Print(output)
