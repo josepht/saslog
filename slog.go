@@ -43,14 +43,6 @@ func New(c Config) (*Logger, error) {
 		c.Name = "-"
 	}
 
-	if c.SystemData == nil {
-		c.SystemData = F{}
-	}
-
-	if c.AppData == nil {
-		c.AppData = F{}
-	}
-
 	l.name = c.Name
 	l.prefix = c.Prefix
 	l.systemData = c.SystemData
@@ -78,6 +70,10 @@ func (l *Logger) New(c Config) *Logger {
 	}
 
 	if c.SystemData != nil {
+		// Create the system data map if it doesn't exist.
+		if nl.systemData == nil {
+			nl.systemData = F{}
+		}
 		for k, v := range c.SystemData {
 			// Don't update existing fields
 			if _, ok := nl.systemData[k]; !ok {
@@ -87,6 +83,10 @@ func (l *Logger) New(c Config) *Logger {
 	}
 
 	if c.AppData != nil {
+		// Create the app data map if it doesn't exist.
+		if nl.appData == nil {
+			nl.appData = F{}
+		}
 		for k, v := range c.AppData {
 			// Don't update existing fields
 			if _, ok := nl.appData[k]; !ok {
