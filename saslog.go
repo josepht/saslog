@@ -13,10 +13,6 @@ import (
 
 type F map[string]string
 
-const (
-	DefaultLevel = "INFO"
-)
-
 type Logger struct {
 	l          *log.Logger
 	systemData F
