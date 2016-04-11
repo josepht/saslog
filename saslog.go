@@ -33,14 +33,11 @@ type Config struct {
 // Create a new logger based on the passed in config.
 func New(c Config) (*Logger, error) {
 	l := new(Logger)
-	l.l = log.New(l, "", 0)
-	l.l.SetFlags(0)
 
 	if c.Writer == nil {
 		c.Writer = os.Stderr
 	}
-
-	l.l.SetOutput(c.Writer)
+	l.l = log.New(c.Writer, "", 0)
 	l.writer = c.Writer
 
 	if c.Name == "" {
