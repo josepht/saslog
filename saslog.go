@@ -56,19 +56,14 @@ func New(c Config) (*Logger, error) {
 // logger.
 func (l *Logger) New(c Config) *Logger {
 	nl := new(Logger)
-	nl.l = log.New(l, "", 0)
+	nl.l = log.New(l.writer, "", 0)
 
 	// copy original Logger fields
 	nl.prefix = l.prefix
 	nl.name = l.name
 	nl.systemData = l.systemData
 	nl.appData = l.appData
-
-	if c.Writer == nil {
-		c.Writer = l.writer
-	}
-	nl.l.SetOutput(c.Writer)
-	nl.writer = c.Writer
+	nl.writer = l.writer
 
 	if c.Name != "" {
 		nl.name = c.Name
