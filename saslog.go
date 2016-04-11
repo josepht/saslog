@@ -1,4 +1,4 @@
-package saslog
+package slog
 
 import (
 	"fmt"
