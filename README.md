@@ -23,24 +23,28 @@ func main() {
 	// Create the logger.
 	c := slog.Config{
 		Writer: os.Stderr,
-		Name:   "sas",
-		Prefix: "SAS:",
+		Name:   "SLOG:",
+		Prefix: "slog",
 		SystemData: slog.F{
-			"service": "sas",
-			"unit":    "sas-us-1",
+			"service": "slog",
+			"unit":    "slog-us-1",
 		},
 		AppData: slog.F{"revno": "678"},
 	}
 	logger, err := slog.New(c)
 
+	// Derive a Logger from an existing one.
+	l := logger.New(slog.Config{Name: "SUBSYSTEM:"})
+	l.Info("Derived Logger", nil)
+
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
-	logger.Info("Config based log", nil)
 
 	// Turn off flags, slog composes log messages in logfmt
 	log.SetFlags(0)
+
 	// Use our logger as the standard logger as well
 	log.SetOutput(logger)
 
