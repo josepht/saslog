@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -22,16 +23,18 @@ type Logger struct {
 	appData    F
 	name       string
 	prefix     string
+	writer     io.Writer
 }
 
 type Config struct {
 	Writer     io.Writer // optional
-	Name       string
-	Prefix     string
+	Name       string    // required
+	Prefix     string    // required
 	SystemData F
 	AppData    F
 }
 
+// Create a new logger based on the passed in config.
 func New(c Config) (*Logger, error) {
 	l := new(Logger)
 	l.l = log.New(l, "", 0)
@@ -42,6 +45,7 @@ func New(c Config) (*Logger, error) {
 	}
 
 	l.l.SetOutput(c.Writer)
+	l.writer = c.Writer
 
 	if c.Name == "" {
 		return nil, errors.New("missing field 'name'")
@@ -59,15 +63,54 @@ func New(c Config) (*Logger, error) {
 
 }
 
+// Create a new logger based on the current logger.  Any
+// config values will overwrite the values for the current
+// logger.
+func (l *Logger) New(c Config) *Logger {
+	nl := new(Logger)
+	nl.l = log.New(l, "", 0)
+
+	// copy original Logger fields
+	nl.prefix = l.prefix
+	nl.name = l.name
+	nl.systemData = l.systemData
+	nl.appData = l.appData
+
+	if c.Writer == nil {
+		c.Writer = l.writer
+	}
+	nl.l.SetOutput(c.Writer)
+	nl.writer = c.Writer
+
+	if c.Name != "" {
+		nl.name = c.Name
+	}
+
+	if c.Prefix != "" {
+		nl.prefix = c.Prefix
+	}
+
+	if c.SystemData != nil {
+		nl.systemData = c.SystemData
+	}
+
+	if c.AppData != nil {
+		nl.appData = c.AppData
+	}
+
+	return nl
+}
+
 func (l *Logger) log(msg string, level string, data F) {
 	ts := time.Now().UTC().Format("2006-01-02 15:04:05.000")
 	d := ""
 
 	// Add the system data
 	for key, value := range l.systemData {
-		d += fmt.Sprintf(" %s=%s", key, value)
+		d += fmt.Sprintf(" %s=%s", key, strconv.Quote(value))
 	}
 
+	// TODO: this is strange and needs further thought
 	var s string
 	if l.systemData["service"] == "" {
 		s = l.name
@@ -77,16 +120,16 @@ func (l *Logger) log(msg string, level string, data F) {
 
 	// Add the application data
 	for key, value := range l.appData {
-		d += fmt.Sprintf(" %s.%s=%s", s, key, value)
+		d += fmt.Sprintf(" %s.%s=%s", s, key, strconv.Quote(value))
 	}
 
 	// Add the per-call data
 	for key, value := range data {
-		d += fmt.Sprintf(" %s.%s=%s", s, key, value)
+		d += fmt.Sprintf(" %s.%s=%s", s, key, strconv.Quote(value))
 	}
 
-	// TODO: add encoding and/or quoting
-	output := fmt.Sprintf("%s %s %s \"%s\"%s", ts, level, l.prefix, msg, d)
+	output := fmt.Sprintf("%s %s %s %s%s", ts, level, l.prefix,
+		strconv.Quote(msg), d)
 
 	l.l.Print(output)
 

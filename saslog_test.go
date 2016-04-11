@@ -8,12 +8,13 @@ import (
 	"testing"
 )
 
-var buf *bytes.Buffer = new(bytes.Buffer)
-var config Config = Config{Writer: buf, Prefix: "SAS:", Name: "sas"}
+var config Config = Config{Prefix: "SAS:", Name: "sas"}
 
 // Test that the standard logger has our prefix and a default level of 'INFO'
 func TestLoggerStdLogOutput(t *testing.T) {
 	msg := "test"
+	buf := new(bytes.Buffer)
+	config.Writer = buf
 
 	l, err := New(config)
 	if err != nil {
@@ -26,14 +27,11 @@ func TestLoggerStdLogOutput(t *testing.T) {
 	// Use the standard logger
 	log.Print(msg)
 
-	strout := strings.TrimSpace(buf.String())
-
-	expected := fmt.Sprintf("INFO %s \"%s\"", config.Prefix, msg)
-
-	if !strings.Contains(strout, expected) {
-		t.Error(strout, " doesn't containe '"+expected+"'")
+	s := strings.TrimSpace(buf.String())
+	e := fmt.Sprintf("INFO %s \"%s\"", config.Prefix, msg)
+	if !strings.Contains(s, e) {
+		t.Errorf("'%s' doesn't contain '%s'", s, e)
 	}
-
 }
 
 // Test that the loggers output is formated properly and includes the default values
@@ -44,6 +42,10 @@ func TestLoggerOutput(t *testing.T) {
 	msg := "test"
 
 	c := config
+
+	buf := new(bytes.Buffer)
+	c.Writer = buf
+
 	c.SystemData = F{
 		key: value,
 	}
@@ -60,14 +62,11 @@ func TestLoggerOutput(t *testing.T) {
 
 	l.Info(msg, nil)
 
-	strout := strings.TrimSpace(buf.String())
-
-	expected := fmt.Sprintf("INFO %s \"%s\" %s=%s", c.Prefix, msg, key, value)
-
-	if !strings.Contains(strout, expected) {
-		t.Error(strout, " doesn't containe '"+expected+"'")
+	s := strings.TrimSpace(buf.String())
+	e := fmt.Sprintf("INFO %s \"%s\" %s=\"%s\"", config.Prefix, msg, key, value)
+	if !strings.Contains(s, e) {
+		t.Errorf("'%s' doesn't contain '%s'", s, e)
 	}
-
 }
 
 // Test that a new Logger has the correct defaults
@@ -96,7 +95,11 @@ func TestLoggerLevelReset(t *testing.T) {
 	info_msg := "test info"
 	debug_msg := "test debug"
 
-	l, err := New(config)
+	c := config
+	buf := new(bytes.Buffer)
+	c.Writer = buf
+
+	l, err := New(c)
 	if err != nil {
 		t.Error("Failed to create a Logger")
 	}
@@ -106,29 +109,143 @@ func TestLoggerLevelReset(t *testing.T) {
 
 	// Send an INFO log entry
 	l.Info(info_msg, nil)
-	strout := strings.TrimSpace(buf.String())
+	s := strings.TrimSpace(buf.String())
+	buf.Reset()
 
-	expected := fmt.Sprintf("INFO %s \"%s\"", config.Prefix, info_msg)
-
-	if !strings.Contains(strout, expected) {
-		t.Error(strout, " doesn't containe '"+expected+"'")
+	e := fmt.Sprintf("INFO %s \"%s\"", config.Prefix, info_msg)
+	if !strings.Contains(s, e) {
+		t.Errorf("'%s' doesn't contain '%s'", s, e)
 	}
 
 	// Send a DEBUG log entry
 	l.Debug(debug_msg, nil)
-	strout = strings.TrimSpace(buf.String())
-	expected = fmt.Sprintf("%s %s \"%s\"", "DEBUG", config.Prefix, debug_msg)
-
-	if !strings.Contains(strout, expected) {
-		t.Error(strout, " doesn't containe '"+expected+"'")
+	s = strings.TrimSpace(buf.String())
+	buf.Reset()
+	e = fmt.Sprintf("%s %s \"%s\"", "DEBUG", config.Prefix, debug_msg)
+	if !strings.Contains(s, e) {
+		t.Errorf("'%s' doesn't contain '%s'", s, e)
 	}
 
 	// Send a second INFO log entry
 	l.Info(info_msg, nil)
-	strout = strings.TrimSpace(buf.String())
-	expected = fmt.Sprintf("INFO %s \"%s\"", config.Prefix, info_msg)
+	s = strings.TrimSpace(buf.String())
+	buf.Reset()
+	e = fmt.Sprintf("INFO %s \"%s\"", config.Prefix, info_msg)
+	if !strings.Contains(s, e) {
+		t.Errorf("'%s' doesn't contain '%s'", s, e)
+	}
+}
 
-	if !strings.Contains(strout, expected) {
-		t.Error(strout, " doesn't containe '"+expected+"'")
+// Test deriving a Logger from an existing Logger
+func TestLoggerFromLogger(t *testing.T) {
+
+	buf := new(bytes.Buffer)
+	c := config
+	c.Writer = buf
+	l, err := New(c)
+	if err != nil {
+		t.Error("Failed to create a Logger")
+	}
+
+	c = Config{SystemData: F{"extra": "extra"}}
+
+	nl := l.New(c)
+	nl.Info("testing", nil)
+
+	// Fields that should be inherited
+	s, e := config.Prefix, nl.prefix
+	if s != e {
+		t.Errorf("'%s' != '%s'", s, e)
+	}
+
+	s, e = config.Name, nl.name
+	if s != e {
+		t.Errorf("'%s' != '%s'", s, e)
+	}
+
+	s = strings.TrimSpace(buf.String())
+	e = fmt.Sprintf("INFO %s \"testing\" extra=\"extra\"", config.Prefix)
+	if !strings.Contains(s, e) {
+		t.Errorf("'%s' doesn't contain '%s'", s, e)
+	}
+}
+
+// Test that missing fields in config fails.
+func TestLoggerConfigMissingFields(t *testing.T) {
+	c := Config{}
+
+	_, err := New(c)
+	if err == nil {
+		t.Error("Missing fields didn't cause an error!")
+	}
+
+}
+
+// Test that AppData and per-call data is prefixed with the Logger's name.
+func TestLoggerAppDataPrefix(t *testing.T) {
+	buf := new(bytes.Buffer)
+	c := config
+	c.Writer = buf
+	c.SystemData = F{"system": "system"}
+	c.AppData = F{"app": "app"}
+	l, err := New(c)
+	if err != nil {
+		t.Error("Failed to create a Logger")
+	}
+
+	l.Info("testing", F{"per-call": "per-call"})
+
+	s := strings.TrimSpace(buf.String())
+	e := fmt.Sprintf("INFO %s \"testing\" system=\"system\" %s.app=\"app\" %s.per-call=\"per-call\"",
+		config.Prefix, config.Name, config.Name)
+	if !strings.Contains(s, e) {
+		t.Errorf("'%s' doesn't contain '%s'", s, e)
+	}
+}
+
+// Test deriving a Logger from an existing Logger overwrites
+// passed in config data.
+func TestLoggerFromLoggerNewData(t *testing.T) {
+	l, err := New(config)
+	if err != nil {
+		t.Error("Failed to create a Logger")
+	}
+
+	if l.prefix != config.Prefix {
+		t.Errorf("%s != %s", l.prefix, config.Prefix)
+	}
+
+	if len(l.systemData) != len(config.SystemData) {
+		t.Errorf("systemData has %d items, expected %d", len(l.systemData),
+			len(config.SystemData))
+	}
+
+	if len(l.appData) != len(config.AppData) {
+		t.Errorf("appData has %d items, expected %d", len(l.appData), len(config.AppData))
+	}
+
+	new_prefix := "new_prefix"
+	new_name := "new_name"
+	nl := l.New(Config{
+		Prefix:     new_prefix,
+		Name:       new_name,
+		SystemData: F{"key": "value"},
+		AppData:    F{"app_key": "app_value"},
+	})
+
+	if nl.prefix != new_prefix {
+		t.Errorf("%s != %s", nl.prefix, new_prefix)
+	}
+
+	if nl.name != new_name {
+		t.Errorf("%s != %s", nl.name, new_name)
+	}
+
+	if len(nl.systemData) != 1 {
+		t.Errorf("systemData has %d items, expected %d", len(nl.systemData), 1)
+	}
+
+	if len(nl.appData) != 1 {
+		t.Errorf("appData has %d items, expected %d", len(nl.appData), 1)
 	}
 }
