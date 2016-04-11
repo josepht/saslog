@@ -37,7 +37,6 @@ func New(c Config) (*Logger, error) {
 		c.Writer = os.Stderr
 	}
 	l.l = log.New(c.Writer, "", 0)
-	l.writer = c.Writer
 
 	if c.Name == "" {
 		c.Name = "-"
@@ -56,14 +55,13 @@ func New(c Config) (*Logger, error) {
 // logger.
 func (l *Logger) New(c Config) *Logger {
 	nl := new(Logger)
-	nl.l = log.New(l.writer, "", 0)
+	nl.l = l.l
 
 	// copy original Logger fields
 	nl.prefix = l.prefix
 	nl.name = l.name
 	nl.systemData = l.systemData
 	nl.appData = l.appData
-	nl.writer = l.writer
 
 	if c.Name != "" {
 		nl.name = c.Name
