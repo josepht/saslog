@@ -123,13 +123,13 @@ func (l *Logger) log(msg string, level string, data F) {
 }
 
 func (l *Logger) Info(msg string, data F) {
-	if l == nil {
+	if l == nil || l.l == nil {
 		return
 	}
 	l.log(msg, "INFO", data)
 }
 func (l *Logger) Debug(msg string, data F) {
-	if l == nil {
+	if l == nil || l.l == nil {
 		return
 	}
 	l.log(msg, "DEBUG", data)
