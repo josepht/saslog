@@ -31,7 +31,7 @@ func main() {
 		},
 		AppData: slog.F{"revno": "678"},
 	}
-	logger, err := slog.New(c)
+	logger := slog.New(c)
 
 	// Derive a Logger from an existing one.
 	l := logger.New(slog.Config{Name: "SUBSYSTEM:"})

@@ -16,10 +16,7 @@ func TestLoggerStdLogOutput(t *testing.T) {
 	buf := new(bytes.Buffer)
 	config.Writer = buf
 
-	l, err := New(config)
-	if err != nil {
-		t.Error("Failed to create a Logger")
-	}
+	l := New(config)
 
 	log.SetFlags(0)
 	log.SetOutput(l)
@@ -53,10 +50,7 @@ func TestLoggerOutput(t *testing.T) {
 		key: value,
 	}
 
-	l, err := New(c)
-	if err != nil {
-		t.Error("Failed to create a Logger")
-	}
+	l := New(c)
 	log.SetFlags(0)
 	log.SetOutput(l)
 
@@ -72,13 +66,9 @@ func TestLoggerOutput(t *testing.T) {
 // Test that a new Logger has the correct defaults
 func TestNewLoggerDefaults(t *testing.T) {
 
-	l, err := New(config)
-	if err != nil {
-		t.Error("Failed to create a Logger")
-	}
+	l := New(config)
 
 	// check Logger defaults match
-
 	if l.prefix != config.Prefix {
 		t.Error("prefix should be '", config.Prefix, "' but is '", l.prefix, "' instead")
 	}
@@ -99,10 +89,7 @@ func TestLoggerLevelReset(t *testing.T) {
 	buf := new(bytes.Buffer)
 	c.Writer = buf
 
-	l, err := New(c)
-	if err != nil {
-		t.Error("Failed to create a Logger")
-	}
+	l := New(c)
 
 	log.SetFlags(0)
 	log.SetOutput(l)
@@ -142,10 +129,7 @@ func TestLoggerFromLogger(t *testing.T) {
 	buf := new(bytes.Buffer)
 	c := config
 	c.Writer = buf
-	l, err := New(c)
-	if err != nil {
-		t.Error("Failed to create a Logger")
-	}
+	l := New(c)
 
 	c = Config{SystemData: F{"extra": "extra"}}
 
@@ -170,17 +154,6 @@ func TestLoggerFromLogger(t *testing.T) {
 	}
 }
 
-// Test that missing fields in config creates a default.
-func TestLoggerConfigMissingFields(t *testing.T) {
-	c := Config{}
-
-	_, err := New(c)
-	if err != nil {
-		t.Error("New() shouldn't require any fields!")
-	}
-
-}
-
 // Test that AppData and per-call data is prefixed with the Logger's prefix.
 func TestLoggerAppDataPrefix(t *testing.T) {
 	buf := new(bytes.Buffer)
@@ -188,10 +161,7 @@ func TestLoggerAppDataPrefix(t *testing.T) {
 	c.Writer = buf
 	c.SystemData = F{"system": "system"}
 	c.AppData = F{"app": "app"}
-	l, err := New(c)
-	if err != nil {
-		t.Error("Failed to create a Logger")
-	}
+	l := New(c)
 
 	l.Info("testing", F{"per-call": "per-call"})
 
@@ -213,10 +183,7 @@ func TestLoggerFromLoggerNewData(t *testing.T) {
 	c.AppData = F{
 		"app_orig_key": "app_orig_value",
 	}
-	l, err := New(c)
-	if err != nil {
-		t.Error("Failed to create a Logger")
-	}
+	l := New(c)
 
 	if l.prefix != c.Prefix {
 		t.Errorf("%s != %s", l.prefix, c.Prefix)

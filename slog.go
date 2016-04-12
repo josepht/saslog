@@ -30,7 +30,7 @@ type Config struct {
 }
 
 // Create a new logger based on the passed in config.
-func New(c Config) (*Logger, error) {
+func New(c Config) *Logger {
 	l := new(Logger)
 
 	if c.Writer == nil {
@@ -47,7 +47,7 @@ func New(c Config) (*Logger, error) {
 	l.systemData = c.SystemData
 	l.appData = c.AppData
 
-	return l, nil
+	return l
 }
 
 // Create a new logger based on the current logger.  Any
