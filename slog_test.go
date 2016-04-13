@@ -174,7 +174,7 @@ func TestLoggerAppDataPrefix(t *testing.T) {
 }
 
 // Test deriving a Logger from an existing Logger overwrites
-// passed in config data.
+// passed in config data except data fields.
 func TestLoggerFromLoggerNewData(t *testing.T) {
 	c := config
 	c.SystemData = F{
@@ -216,6 +216,7 @@ func TestLoggerFromLoggerNewData(t *testing.T) {
 		t.Errorf("%s != %s", nl.name, new_name)
 	}
 
+	// Test that the new logger hasn't modified the original data values
 	if len(nl.systemData) != 1 {
 		t.Errorf("systemData has %d items, expected %d", len(nl.systemData), 1)
 	}
@@ -232,5 +233,56 @@ func TestLoggerFromLoggerNewData(t *testing.T) {
 	if nl.appData["app_orig_key"] != "app_orig_value" {
 		t.Errorf("appData has %s for 'app_orig_key', expected %s", nl.appData["app_orig_key"],
 			"app_orig_value")
+	}
+
+	// Test that the original logger wasn't modified
+	if len(l.systemData) != 1 {
+		t.Errorf("systemData has %d items, expected %d", len(l.systemData), 1)
+	}
+
+	if len(l.appData) != 1 {
+		t.Errorf("appData has %d items, expected %d", len(l.appData), 1)
+	}
+
+	if l.systemData["orig_key"] != "orig_value" {
+		t.Errorf("systemData has %s for 'orig_key', expected %s", l.systemData["orig_key"],
+			"orig_value")
+	}
+
+	if l.appData["app_orig_key"] != "app_orig_value" {
+		t.Errorf("appData has %s for 'app_orig_key', expected %s", l.appData["app_orig_key"],
+			"app_orig_value")
+	}
+}
+
+// Test that a nil Logger doesn't blow up when its methods are called.
+func TestNilLogger(t *testing.T) {
+	l := Logger{}
+
+	l.Info("test", nil)
+	l.Debug("test", nil)
+	l.Error("test", nil)
+
+	_, err := l.Write([]byte("test"))
+
+	if err != nil {
+		t.Errorf("Logger.Write() failed on a nil Logger: %s", err.Error())
+	}
+}
+
+// Test that an empty prefix doesn't include '.' in the key/value pairs
+func TestEmptyPrefix(t *testing.T) {
+	buf := new(bytes.Buffer)
+	c := config
+	c.Writer = buf
+	c.Prefix = ""
+	l := New(c)
+
+	l.Info("testing", F{"per-call": "per-call"})
+
+	s := strings.TrimSpace(buf.String())
+	e := fmt.Sprintf("INFO %s \"testing\" per-call=\"per-call\"", config.Name)
+	if !strings.Contains(s, e) {
+		t.Errorf("'%s' doesn't contain '%s'", s, e)
 	}
 }

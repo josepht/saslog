@@ -18,7 +18,6 @@ type Logger struct {
 	appData    F
 	name       string
 	prefix     string
-	writer     io.Writer
 }
 
 type Config struct {
@@ -54,17 +53,28 @@ func New(c Config) *Logger {
 // config values will overwrite the values for the current
 // logger.
 func (l *Logger) New(c Config) *Logger {
+	if l == nil || l.l == nil {
+		return nil
+	}
 	nl := new(Logger)
 	nl.l = l.l
 
 	// copy original Logger fields
 	nl.prefix = l.prefix
 	nl.name = l.name
-	nl.systemData = l.systemData
-	nl.appData = l.appData
+	nl.systemData = F{}
+	nl.appData = F{}
 
 	if c.Name != "" {
 		nl.name = c.Name
+	}
+
+	for k, v := range l.systemData {
+		nl.systemData[k] = v
+	}
+
+	for k, v := range l.appData {
+		nl.appData[k] = v
 	}
 
 	if c.SystemData != nil {
@@ -97,6 +107,9 @@ func (l *Logger) New(c Config) *Logger {
 }
 
 func (l *Logger) log(msg string, level string, data F) {
+	if l == nil || l.l == nil {
+		return
+	}
 	ts := time.Now().UTC().Format("2006-01-02 15:04:05.000")
 	d := ""
 
@@ -105,14 +118,21 @@ func (l *Logger) log(msg string, level string, data F) {
 		d += fmt.Sprintf(" %s=%s", key, strconv.Quote(value))
 	}
 
+	prefix := ""
+	if l.prefix == "" {
+		prefix = l.prefix
+	} else {
+		prefix = fmt.Sprintf("%s.", l.prefix)
+	}
+
 	// Add the application data
 	for key, value := range l.appData {
-		d += fmt.Sprintf(" %s.%s=%s", l.prefix, key, strconv.Quote(value))
+		d += fmt.Sprintf(" %s%s=%s", prefix, key, strconv.Quote(value))
 	}
 
 	// Add the per-call data
 	for key, value := range data {
-		d += fmt.Sprintf(" %s.%s=%s", l.prefix, key, strconv.Quote(value))
+		d += fmt.Sprintf(" %s%s=%s", prefix, key, strconv.Quote(value))
 	}
 
 	output := fmt.Sprintf("%s %s %s %s%s", ts, level, l.name,
@@ -123,16 +143,15 @@ func (l *Logger) log(msg string, level string, data F) {
 }
 
 func (l *Logger) Info(msg string, data F) {
-	if l == nil || l.l == nil {
-		return
-	}
 	l.log(msg, "INFO", data)
 }
+
 func (l *Logger) Debug(msg string, data F) {
-	if l == nil || l.l == nil {
-		return
-	}
 	l.log(msg, "DEBUG", data)
+}
+
+func (l *Logger) Error(msg string, data F) {
+	l.log(msg, "ERROR", data)
 }
 
 func (l *Logger) Write(bytes []byte) (int, error) {
