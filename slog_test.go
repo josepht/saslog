@@ -84,6 +84,7 @@ func TestLoggerLevelReset(t *testing.T) {
 	// defaults
 	info_msg := "test info"
 	debug_msg := "test debug"
+	error_msg := "test error"
 
 	c := config
 	buf := new(bytes.Buffer)
@@ -109,6 +110,15 @@ func TestLoggerLevelReset(t *testing.T) {
 	s = strings.TrimSpace(buf.String())
 	buf.Reset()
 	e = fmt.Sprintf("%s %s \"%s\"", "DEBUG", config.Name, debug_msg)
+	if !strings.Contains(s, e) {
+		t.Errorf("'%s' doesn't contain '%s'", s, e)
+	}
+
+	// Send an ERROR log entry
+	l.Error(error_msg, nil)
+	s = strings.TrimSpace(buf.String())
+	buf.Reset()
+	e = fmt.Sprintf("%s %s \"%s\"", "ERROR", config.Name, error_msg)
 	if !strings.Contains(s, e) {
 		t.Errorf("'%s' doesn't contain '%s'", s, e)
 	}
@@ -257,16 +267,18 @@ func TestLoggerFromLoggerNewData(t *testing.T) {
 
 // Test that a nil Logger doesn't blow up when its methods are called.
 func TestNilLogger(t *testing.T) {
-	l := Logger{}
+	var l *Logger
 
 	l.Info("test", nil)
 	l.Debug("test", nil)
 	l.Error("test", nil)
 
-	_, err := l.Write([]byte("test"))
+	l.Write([]byte("test"))
 
-	if err != nil {
-		t.Errorf("Logger.Write() failed on a nil Logger: %s", err.Error())
+	nl := l.New(Config{})
+
+	if nl != nil {
+		t.Error("Creating a Logger from a nil Logger should yeild nil")
 	}
 }
 
