@@ -53,7 +53,7 @@ func New(c Config) *Logger {
 // config values will overwrite the values for the current
 // logger.
 func (l *Logger) New(c Config) *Logger {
-	if l == nil || l.l == nil {
+	if l == nil {
 		return nil
 	}
 	nl := new(Logger)
@@ -99,7 +99,7 @@ func (l *Logger) New(c Config) *Logger {
 }
 
 func (l *Logger) log(msg string, level string, data F) {
-	if l == nil || l.l == nil {
+	if l == nil {
 		return
 	}
 	ts := time.Now().UTC().Format("2006-01-02 15:04:05.000")
