@@ -25,11 +25,11 @@ func main() {
 		Writer: os.Stderr,
 		Name:   "SLOG:",
 		Prefix: "slog",
-		SystemData: slog.F{
+		SystemTags: slog.T{
 			"service": "slog",
 			"unit":    "slog-us-1",
 		},
-		AppData: slog.F{"revno": "678"},
+		AppTags: slog.T{"revno": "678"},
 	}
 	logger := slog.New(c)
 
@@ -48,17 +48,17 @@ func main() {
 	// Use our logger as the standard logger as well
 	log.SetOutput(logger)
 
-	// Use our logger directly to include extra data in the logs
-	logger.Info("Info", slog.F{
+	// Use our logger directly to include extra tags in the logs
+	logger.Info("Info", slog.T{
 		"file":  "blah",
 		"error": "none",
 	})
 
-	// Extra data is not required
+	// Extra tags are not required
 	logger.Debug("Debug", nil)
 
 	// The standard logger will use our logger and include our
-	// logger level data and log level.
+	// logger level tags and use log level INFO.
 	log.Println("Log message here")
 }
 ```

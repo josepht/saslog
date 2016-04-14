@@ -43,10 +43,10 @@ func TestLoggerOutput(t *testing.T) {
 	buf := new(bytes.Buffer)
 	c.Writer = buf
 
-	c.SystemData = F{
+	c.SystemTags = T{
 		key: value,
 	}
-	c.AppData = F{
+	c.AppTags = T{
 		key: value,
 	}
 
@@ -141,7 +141,7 @@ func TestLoggerFromLogger(t *testing.T) {
 	c.Writer = buf
 	l := New(c)
 
-	c = Config{SystemData: F{"extra": "extra"}}
+	c = Config{SystemTags: T{"extra": "extra"}}
 
 	nl := l.New(c)
 	nl.Info("testing", nil)
@@ -164,16 +164,16 @@ func TestLoggerFromLogger(t *testing.T) {
 	}
 }
 
-// Test that AppData and per-call data is prefixed with the Logger's prefix.
-func TestLoggerAppDataPrefix(t *testing.T) {
+// Test that AppTags and per-call tags are prefixed with the Logger's prefix.
+func TestLoggerAppTagsPrefix(t *testing.T) {
 	buf := new(bytes.Buffer)
 	c := config
 	c.Writer = buf
-	c.SystemData = F{"system": "system"}
-	c.AppData = F{"app": "app"}
+	c.SystemTags = T{"system": "system"}
+	c.AppTags = T{"app": "app"}
 	l := New(c)
 
-	l.Info("testing", F{"per-call": "per-call"})
+	l.Info("testing", T{"per-call": "per-call"})
 
 	s := strings.TrimSpace(buf.String())
 	e := fmt.Sprintf("INFO %s \"testing\" system=\"system\" %s.app=\"app\" %s.per-call=\"per-call\"",
@@ -184,13 +184,13 @@ func TestLoggerAppDataPrefix(t *testing.T) {
 }
 
 // Test deriving a Logger from an existing Logger overwrites
-// passed in config data except data fields.
-func TestLoggerFromLoggerNewData(t *testing.T) {
+// passed in config data except tagss.
+func TestLoggerFromLoggerNewTags(t *testing.T) {
 	c := config
-	c.SystemData = F{
+	c.SystemTags = T{
 		"orig_key": "orig_value",
 	}
-	c.AppData = F{
+	c.AppTags = T{
 		"app_orig_key": "app_orig_value",
 	}
 	l := New(c)
@@ -199,13 +199,13 @@ func TestLoggerFromLoggerNewData(t *testing.T) {
 		t.Errorf("%s != %s", l.prefix, c.Prefix)
 	}
 
-	if len(l.systemData) != len(c.SystemData) {
-		t.Errorf("systemData has %d items, expected %d", len(l.systemData),
-			len(c.SystemData))
+	if len(l.systemTags) != len(c.SystemTags) {
+		t.Errorf("systemTags has %d items, expected %d", len(l.systemTags),
+			len(c.SystemTags))
 	}
 
-	if len(l.appData) != len(c.AppData) {
-		t.Errorf("appData has %d items, expected %d", len(l.appData), len(c.AppData))
+	if len(l.appTags) != len(c.AppTags) {
+		t.Errorf("appTags has %d items, expected %d", len(l.appTags), len(c.AppTags))
 	}
 
 	new_prefix := "new_prefix"
@@ -213,8 +213,8 @@ func TestLoggerFromLoggerNewData(t *testing.T) {
 	nl := l.New(Config{
 		Prefix:     new_prefix,
 		Name:       new_name,
-		SystemData: F{"orig_key": "new_value"},
-		AppData:    F{"app_orig_key": "app_new_value"},
+		SystemTags: T{"orig_key": "new_value"},
+		AppTags:    T{"app_orig_key": "app_new_value"},
 	})
 
 	// prefix shouldn't be changed
@@ -226,41 +226,41 @@ func TestLoggerFromLoggerNewData(t *testing.T) {
 		t.Errorf("%s != %s", nl.name, new_name)
 	}
 
-	// Test that the new logger hasn't modified the original data values
-	if len(nl.systemData) != 1 {
-		t.Errorf("systemData has %d items, expected %d", len(nl.systemData), 1)
+	// Test that the new logger hasn't modified the original tag values
+	if len(nl.systemTags) != 1 {
+		t.Errorf("systemTags has %d items, expected %d", len(nl.systemTags), 1)
 	}
 
-	if len(nl.appData) != 1 {
-		t.Errorf("appData has %d items, expected %d", len(nl.appData), 1)
+	if len(nl.appTags) != 1 {
+		t.Errorf("appTags has %d items, expected %d", len(nl.appTags), 1)
 	}
 
-	if nl.systemData["orig_key"] != "orig_value" {
-		t.Errorf("systemData has %s for 'orig_key', expected %s", nl.systemData["orig_key"],
+	if nl.systemTags["orig_key"] != "orig_value" {
+		t.Errorf("systemTags has %s for 'orig_key', expected %s", nl.systemTags["orig_key"],
 			"orig_value")
 	}
 
-	if nl.appData["app_orig_key"] != "app_orig_value" {
-		t.Errorf("appData has %s for 'app_orig_key', expected %s", nl.appData["app_orig_key"],
+	if nl.appTags["app_orig_key"] != "app_orig_value" {
+		t.Errorf("appTags has %s for 'app_orig_key', expected %s", nl.appTags["app_orig_key"],
 			"app_orig_value")
 	}
 
 	// Test that the original logger wasn't modified
-	if len(l.systemData) != 1 {
-		t.Errorf("systemData has %d items, expected %d", len(l.systemData), 1)
+	if len(l.systemTags) != 1 {
+		t.Errorf("systemTags has %d items, expected %d", len(l.systemTags), 1)
 	}
 
-	if len(l.appData) != 1 {
-		t.Errorf("appData has %d items, expected %d", len(l.appData), 1)
+	if len(l.appTags) != 1 {
+		t.Errorf("appTags has %d items, expected %d", len(l.appTags), 1)
 	}
 
-	if l.systemData["orig_key"] != "orig_value" {
-		t.Errorf("systemData has %s for 'orig_key', expected %s", l.systemData["orig_key"],
+	if l.systemTags["orig_key"] != "orig_value" {
+		t.Errorf("systemTags has %s for 'orig_key', expected %s", l.systemTags["orig_key"],
 			"orig_value")
 	}
 
-	if l.appData["app_orig_key"] != "app_orig_value" {
-		t.Errorf("appData has %s for 'app_orig_key', expected %s", l.appData["app_orig_key"],
+	if l.appTags["app_orig_key"] != "app_orig_value" {
+		t.Errorf("appTags has %s for 'app_orig_key', expected %s", l.appTags["app_orig_key"],
 			"app_orig_value")
 	}
 }
@@ -290,7 +290,7 @@ func TestEmptyPrefix(t *testing.T) {
 	c.Prefix = ""
 	l := New(c)
 
-	l.Info("testing", F{"per-call": "per-call"})
+	l.Info("testing", T{"per-call": "per-call"})
 
 	s := strings.TrimSpace(buf.String())
 	e := fmt.Sprintf("INFO %s \"testing\" per-call=\"per-call\"", config.Name)
