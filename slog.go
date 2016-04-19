@@ -20,16 +20,20 @@ type Logger struct {
 	prefix     string
 }
 
+type RootConfig struct {
+	Writer io.Writer // optional
+	Config           // optional
+}
+
 type Config struct {
-	Writer     io.Writer // optional
-	Name       string    // optional
-	Prefix     string    // optional
+	Name       string // optional
+	Prefix     string // optional
 	SystemTags T
 	AppTags    T
 }
 
 // Create a new logger based on the passed in config.
-func New(c Config) *Logger {
+func New(c RootConfig) *Logger {
 	l := new(Logger)
 
 	if c.Writer == nil {

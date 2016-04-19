@@ -12,7 +12,6 @@ Here's an example usage of slog.
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -21,26 +20,22 @@ import (
 
 func main() {
 	// Create the logger.
-	c := slog.Config{
+	c := slog.RootConfig{
 		Writer: os.Stderr,
-		Name:   "SLOG:",
-		Prefix: "slog",
-		SystemTags: slog.T{
-			"service": "slog",
-			"unit":    "slog-us-1",
-		},
-		AppTags: slog.T{"revno": "678"},
-	}
+		Config: slog.Config{
+			Name:   "SLOG:",
+			Prefix: "slog",
+			SystemTags: slog.T{
+				"service": "slog",
+				"unit":    "slog-us-1",
+			},
+			AppTags: slog.T{"revno": "678"},
+		}}
 	logger := slog.New(c)
 
 	// Derive a Logger from an existing one.
 	l := logger.New(slog.Config{Name: "SUBSYSTEM:"})
 	l.Info("Derived Logger", nil)
-
-	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
-	}
 
 	// Turn off flags, slog composes log messages in logfmt
 	log.SetFlags(0)
