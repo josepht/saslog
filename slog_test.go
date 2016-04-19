@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-var config Config = Config{Prefix: "SAS:", Name: "sas"}
+var config RootConfig = RootConfig{Config: Config{Prefix: "SAS:", Name: "sas"}}
 
 // Test that the standard logger has our prefix and a default level of 'INFO'
 func TestLoggerStdLogOutput(t *testing.T) {
@@ -141,9 +141,9 @@ func TestLoggerFromLogger(t *testing.T) {
 	c.Writer = buf
 	l := New(c)
 
-	c = Config{SystemTags: T{"extra": "extra"}}
+	c = RootConfig{Config: Config{SystemTags: T{"extra": "extra"}}}
 
-	nl := l.New(c)
+	nl := l.New(c.Config)
 	nl.Info("testing", nil)
 
 	// Fields that should be inherited
