@@ -14,9 +14,8 @@ var config Config = Config{Prefix: "SAS:", Name: "sas"}
 func TestLoggerStdLogOutput(t *testing.T) {
 	msg := "test"
 	buf := new(bytes.Buffer)
-	config.Writer = buf
 
-	l := New(config)
+	l := New(buf, config)
 
 	log.SetFlags(0)
 	log.SetOutput(l)
@@ -41,7 +40,6 @@ func TestLoggerOutput(t *testing.T) {
 	c := config
 
 	buf := new(bytes.Buffer)
-	c.Writer = buf
 
 	c.SystemTags = T{
 		key: value,
@@ -50,7 +48,7 @@ func TestLoggerOutput(t *testing.T) {
 		key: value,
 	}
 
-	l := New(c)
+	l := New(buf, c)
 	log.SetFlags(0)
 	log.SetOutput(l)
 
@@ -66,7 +64,7 @@ func TestLoggerOutput(t *testing.T) {
 // Test that a new Logger has the correct defaults
 func TestNewLoggerDefaults(t *testing.T) {
 
-	l := New(config)
+	l := New(nil, config)
 
 	// check Logger defaults match
 	if l.prefix != config.Prefix {
@@ -88,9 +86,8 @@ func TestLoggerLevelReset(t *testing.T) {
 
 	c := config
 	buf := new(bytes.Buffer)
-	c.Writer = buf
 
-	l := New(c)
+	l := New(buf, c)
 
 	log.SetFlags(0)
 	log.SetOutput(l)
@@ -138,8 +135,7 @@ func TestLoggerFromLogger(t *testing.T) {
 
 	buf := new(bytes.Buffer)
 	c := config
-	c.Writer = buf
-	l := New(c)
+	l := New(buf, c)
 
 	c = Config{SystemTags: T{"extra": "extra"}}
 
@@ -168,10 +164,9 @@ func TestLoggerFromLogger(t *testing.T) {
 func TestLoggerAppTagsPrefix(t *testing.T) {
 	buf := new(bytes.Buffer)
 	c := config
-	c.Writer = buf
 	c.SystemTags = T{"system": "system"}
 	c.AppTags = T{"app": "app"}
-	l := New(c)
+	l := New(buf, c)
 
 	l.Info("testing", T{"per-call": "per-call"})
 
@@ -193,7 +188,7 @@ func TestLoggerFromLoggerNewTags(t *testing.T) {
 	c.AppTags = T{
 		"app_orig_key": "app_orig_value",
 	}
-	l := New(c)
+	l := New(nil, c)
 
 	if l.prefix != c.Prefix {
 		t.Errorf("%s != %s", l.prefix, c.Prefix)
@@ -286,9 +281,8 @@ func TestNilLogger(t *testing.T) {
 func TestEmptyPrefix(t *testing.T) {
 	buf := new(bytes.Buffer)
 	c := config
-	c.Writer = buf
 	c.Prefix = ""
-	l := New(c)
+	l := New(buf, c)
 
 	l.Info("testing", T{"per-call": "per-call"})
 

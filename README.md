@@ -22,7 +22,6 @@ import (
 func main() {
 	// Create the logger.
 	c := slog.Config{
-		Writer: os.Stderr,
 		Name:   "SLOG:",
 		Prefix: "slog",
 		SystemTags: slog.T{
@@ -31,7 +30,7 @@ func main() {
 		},
 		AppTags: slog.T{"revno": "678"},
 	}
-	logger := slog.New(c)
+	logger := slog.New(nil, c)
 
 	// Derive a Logger from an existing one.
 	l := logger.New(slog.Config{Name: "SUBSYSTEM:"})
