@@ -145,6 +145,11 @@ func (l *Logger) Error(msg string, tags T) {
 	l.log(msg, "ERROR", tags)
 }
 
+func (l *Logger) Fatal(msg string, tags T) {
+	l.log(msg, "ERROR", tags)
+	os.Exit(1)
+}
+
 func (l *Logger) Write(bytes []byte) (int, error) {
 	// remove trailing whitespace
 	l.Info(strings.TrimSpace(string(bytes)), nil)
